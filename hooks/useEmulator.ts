@@ -83,7 +83,6 @@ export const mapKeyToAWT = (key: string): number => {
         case 'ArrowLeft': return 37;
         case 'ArrowRight': return 39;
         case 'Enter': return 10;
-        case 'Escape': return 27;
         case ' ': return 32;
         case 'z':
         case 'Z': return 90; // VK_Z

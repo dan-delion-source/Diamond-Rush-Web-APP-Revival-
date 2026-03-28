@@ -33,6 +33,25 @@ const loadCheerpJScript = (): Promise<void> => {
     });
 };
 
+// CheerpJ can only be initialized ONCE per page load — track it at module level.
+let cheerpjInitPromise: Promise<void> | null = null;
+
+const ensureCheerpJInit = (container: HTMLElement): Promise<void> => {
+    if (!cheerpjInitPromise) {
+        cheerpjInitPromise = (async () => {
+            await loadCheerpJScript();
+            await window.cheerpjInit({
+                enablePreciseAppletThreading: true,
+                overrideAppletSize: true,
+            });
+            const displayWidth = 960;
+            const displayHeight = 1280;
+            window.cheerpjCreateDisplay(displayWidth, displayHeight, container);
+        })();
+    }
+    return cheerpjInitPromise;
+};
+
 export class FreeJ2MEManager {
     private initialized = false;
     private onReadyCallback: (() => void) | null = null;
@@ -51,26 +70,14 @@ export class FreeJ2MEManager {
 
     /**
      * Initialize CheerpJ and create the display.
+     * Uses a module-level promise so cheerpjInit is called exactly once per page.
      */
     public async init(container: HTMLElement) {
         try {
             if (this.initialized) return;
 
             console.log('[FreeJ2MEManager] Initializing CheerpJ runtime...');
-            await loadCheerpJScript();
-
-            // Initialization options
-            await window.cheerpjInit({
-                enablePreciseAppletThreading: true,
-                overrideAppletSize: true, // Allow Java to resize the applet/display
-            });
-
-            // Resolution for high-quality scaling: 240x320 scaled by 4
-            const displayWidth = 960;
-            const displayHeight = 1280;
-
-            console.log(`[FreeJ2MEManager] Creating display: ${displayWidth}x${displayHeight}`);
-            window.cheerpjCreateDisplay(displayWidth, displayHeight, container);
+            await ensureCheerpJInit(container);
 
             this.initialized = true;
             console.log('[FreeJ2MEManager] CheerpJ ready.');

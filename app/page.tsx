@@ -5,12 +5,73 @@ import PhoneFrame from "@/components/PhoneFrame";
 import EmulatorCanvas from "@/components/EmulatorCanvas";
 import Controls from "@/components/Controls";
 import { useEmulator } from "@/hooks/useEmulator";
-import { Gamepad2, RotateCcw, Zap } from "lucide-react";
+import { Gamepad2, RotateCcw, Zap, ChevronDown } from "lucide-react";
 
+// ── Game registry ────────────────────────────────────────────────────────────
+const GAMES = {
+  DiamondRush: {
+    label: "Diamond Rush",
+    jar: "/games/DiamondRush.jar",
+    subtitle: "Nokia Evolution v2.0",
+    description:
+      "The legendary relic hunter returns in high fidelity. Navigate hazardous catacombs and ancient enigmas in this WASM-powered mobile reconstruction.",
+    frameTitle: "Diamond Rush • Legacy",
+    controls: [
+      { k: "Arrows", a: "Movement Matrix" },
+      { k: "Q / W", a: "Options / Back" },
+      { k: "Z / X", a: "Star / Pound" },
+      { k: "Enter", a: "System Action" },
+    ],
+  },
+  BounceTales: {
+    label: "Bounce Tales",
+    jar: "/games/Bounce-Tales.jar",
+    subtitle: "Nokia Classic • Adventure",
+    description:
+      "Guide the beloved red rubber ball through vibrant worlds packed with obstacles, puzzles, and surprises in this classic Nokia platformer.",
+    frameTitle: "Bounce Tales • Classic",
+    controls: [
+      { k: "Arrows", a: "Move / Jump" },
+      { k: "Enter", a: "Confirm / Action" },
+      { k: "Q / W", a: "Options / Back" },
+      { k: "Z / X", a: "Star / Pound" },
+    ],
+  },
+} as const;
+
+type GameKey = keyof typeof GAMES;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'arcadeSelectedGame';
+
+const getSavedGame = (): GameKey => {
+  if (typeof window === 'undefined') return 'DiamondRush';
+  const saved = sessionStorage.getItem(STORAGE_KEY) as GameKey | null;
+  return saved && saved in GAMES ? saved : 'DiamondRush';
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function ArcadePage() {
   const [isCRT, setIsCRT] = React.useState(true);
+  // Initialize directly from sessionStorage — no useEffect needed since this
+  // value must be correct on the very first render (before CheerpJ starts).
+  const [selectedGame] = React.useState<GameKey>(getSavedGame);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const { isLoading, isReady, error, manager } = useEmulator("/games/DiamondRush.jar", containerRef);
+  const game = GAMES[selectedGame];
+
+  const { isLoading, isReady, error, manager } = useEmulator(game.jar, containerRef);
+
+  // Switching games requires a full page reload because CheerpJ can only be
+  // initialized once per page. We persist the selection so the reload picks
+  // up the correct game instead of defaulting back to Diamond Rush.
+  const handleGameSelect = (key: GameKey) => {
+    setDropdownOpen(false);
+    if (key === selectedGame) return;
+    sessionStorage.setItem(STORAGE_KEY, key);
+    window.location.reload();
+  };
 
   return (
     <main className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-4 md:p-8">
@@ -24,18 +85,60 @@ export default function ArcadePage() {
         <div className="xl:col-span-3 space-y-8 order-2 xl:order-1 flex flex-col justify-center">
           <div className="glass-panel p-8 rounded-[32px] space-y-6 border-white/5 shadow-[0_0_80px_rgba(0,0,0,0.6)] relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+            {/* ── Game Selector Dropdown ─────────────────────────────────── */}
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen((o) => !o)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-neutral-300 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 hover:border-accent/30 transition-all duration-300"
+              >
+                <span className="flex items-center gap-2">
+                  <Gamepad2 size={13} className="text-accent" />
+                  {game.label}
+                </span>
+                <ChevronDown
+                  size={13}
+                  className={`text-accent transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute top-full mt-2 left-0 w-full bg-[#111113] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                  {(Object.keys(GAMES) as GameKey[]).map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => handleGameSelect(key)}
+                      className={`w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-2 ${
+                        selectedGame === key
+                          ? "bg-accent/20 text-accent"
+                          : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                      }`}
+                    >
+                      <Gamepad2 size={11} />
+                      {GAMES[key].label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── Game Header ───────────────────────────────────────────── */}
             <div className="flex items-center gap-4 relative">
               <div className="p-3 bg-accent/20 rounded-2xl shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)]">
                 <Gamepad2 className="text-accent w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-black italic tracking-tighter glow-text uppercase leading-none mb-1">Diamond Rush</h1>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-[0.3em] font-black">Nokia Evolution v2.0</p>
+                <h1 className="text-3xl font-black italic tracking-tighter glow-text uppercase leading-none mb-1 transition-all duration-500">
+                  {game.label}
+                </h1>
+                <p className="text-[10px] text-neutral-500 uppercase tracking-[0.3em] font-black">
+                  {game.subtitle}
+                </p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed font-bold opacity-80 border-l-2 border-accent/20 pl-4">
-              The legendary relic hunter returns in high fidelity. Navigate hazardous catacombs and ancient enigmas in this WASM-powered mobile reconstruction.
+            <p className="text-xs text-neutral-400 leading-relaxed font-bold opacity-80 border-l-2 border-accent/20 pl-4 transition-all duration-500">
+              {game.description}
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-4 relative">
@@ -80,7 +183,7 @@ export default function ArcadePage() {
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 aspect-square bg-accent/20 blur-[150px] rounded-full -z-10 animate-pulse-slow"></div>
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 aspect-square bg-purple-500/10 blur-[200px] rounded-full -z-20 delay-1000"></div>
 
-            <PhoneFrame title="Diamond Rush • Legacy">
+            <PhoneFrame title={game.frameTitle}>
               <EmulatorCanvas
                 containerRef={containerRef}
                 isReady={isReady}
@@ -126,12 +229,7 @@ export default function ArcadePage() {
             <div className="mt-12 pt-10 border-t border-white/10 hidden xl:block">
               <h3 className="text-[10px] uppercase text-neutral-500 font-black tracking-[0.3em] mb-6">Instruction Set</h3>
               <div className="space-y-4">
-                {[
-                  { k: "Arrows", a: "Movement Matrix" },
-                  { k: "Q / W", a: "Options / Back" },
-                  { k: "Z / X", a: "Star / Pound" },
-                  { k: "Enter", a: "System Action" }
-                ].map((map, i) => (
+                {game.controls.map((map, i) => (
                   <div key={i} className="flex justify-between items-center text-[10px] font-black group cursor-default">
                     <span className="bg-white/5 px-3 py-1.5 rounded-xl text-accent border border-white/10 shadow-lg group-hover:bg-accent group-hover:text-black transition-all duration-300 font-mono tracking-tighter">{map.k}</span>
                     <span className="text-neutral-500 uppercase tracking-widest opacity-60 group-hover:opacity-100 group-hover:text-neutral-300 transition-all">{map.a}</span>
@@ -146,7 +244,7 @@ export default function ArcadePage() {
       {/* Legal Footer */}
       <footer className="w-full max-w-[1600px] mt-8 px-8 flex justify-center relative z-10">
         <p className="text-[8px] md:text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] opacity-40 hover:opacity-100 transition-opacity">
-          This site runs a locally hosted Java ME game. All rights belong to the original publisher.
+          This site runs locally hosted Java ME games. All rights belong to their original publishers.
         </p>
       </footer>
     </main>
