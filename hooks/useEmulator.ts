@@ -12,7 +12,7 @@ export interface EmulatorState {
  * CheerpJ renders the Java AWT output directly into the container div,
  * and handles keyboard input automatically through its AWT bridge.
  */
-export const useEmulator = (jarUrl: string, containerRef: RefObject<HTMLDivElement | null>) => {
+export const useEmulator = (jarUrl: string, containerRef: RefObject<HTMLDivElement | null>, width: number = 240, height: number = 320) => {
     const [state, setState] = useState<EmulatorState>({
         isLoading: true,
         isReady: false,
@@ -23,7 +23,7 @@ export const useEmulator = (jarUrl: string, containerRef: RefObject<HTMLDivEleme
 
     useEffect(() => {
         const container = containerRef.current;
-        if (!container) return;
+        if (!container || !jarUrl) return;
 
         const manager = new FreeJ2MEManager();
         managerRef.current = manager;
@@ -56,8 +56,8 @@ export const useEmulator = (jarUrl: string, containerRef: RefObject<HTMLDivEleme
         window.addEventListener('keyup', handleKeyUp);
 
         const startEmulator = async () => {
-            await manager.init(container);
-            await manager.loadJar(jarUrl);
+            await manager.init(container, width, height);
+            await manager.loadJar(jarUrl, width, height);
         };
 
         startEmulator();
@@ -68,7 +68,7 @@ export const useEmulator = (jarUrl: string, containerRef: RefObject<HTMLDivEleme
             manager.terminate();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [jarUrl]);
+    }, [jarUrl, width, height]);
 
     return { ...state, manager: managerRef.current };
 };

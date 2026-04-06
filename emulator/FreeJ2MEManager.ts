@@ -36,16 +36,16 @@ const loadCheerpJScript = (): Promise<void> => {
 // CheerpJ can only be initialized ONCE per page load — track it at module level.
 let cheerpjInitPromise: Promise<void> | null = null;
 
-const ensureCheerpJInit = (container: HTMLElement): Promise<void> => {
+const ensureCheerpJInit = (container: HTMLElement, scale: number = 2, width: number = 240, height: number = 320): Promise<void> => {
     if (!cheerpjInitPromise) {
         cheerpjInitPromise = (async () => {
             await loadCheerpJScript();
             await window.cheerpjInit({
-                enablePreciseAppletThreading: true,
+                // Removed enablePreciseAppletThreading for heavy performance gain
                 overrideAppletSize: true,
             });
-            const displayWidth = 960;
-            const displayHeight = 1280;
+            const displayWidth = width * scale;
+            const displayHeight = height * scale;
             window.cheerpjCreateDisplay(displayWidth, displayHeight, container);
         })();
     }
@@ -72,12 +72,12 @@ export class FreeJ2MEManager {
      * Initialize CheerpJ and create the display.
      * Uses a module-level promise so cheerpjInit is called exactly once per page.
      */
-    public async init(container: HTMLElement) {
+    public async init(container: HTMLElement, width: number = 240, height: number = 320) {
         try {
             if (this.initialized) return;
 
             console.log('[FreeJ2MEManager] Initializing CheerpJ runtime...');
-            await ensureCheerpJInit(container);
+            await ensureCheerpJInit(container, 2, width, height);
 
             this.initialized = true;
             console.log('[FreeJ2MEManager] CheerpJ ready.');
@@ -96,7 +96,7 @@ export class FreeJ2MEManager {
      * The standard FreeJ2ME AWT build has Main-Class set in manifest.
      * Arguments: [jarPath, width, height, scaleFactor]
      */
-    public async loadJar(jarPath: string) {
+    public async loadJar(jarPath: string, width: number = 240, height: number = 320) {
         try {
             if (!this.initialized) {
                 throw new Error('CheerpJ not initialized.');
@@ -112,14 +112,14 @@ export class FreeJ2MEManager {
             // Signal ready right before starting the game
             if (this.onReadyCallback) this.onReadyCallback();
 
-            // Run FreeJ2ME JAR with arguments: [jarPath, width, height, scale]
-            // We use 240x320 with scale 4 (960x1280) for high quality.
+            // We use the provided width/height and a scale of 2 to balance performance and quality.
+            const scale = "2";
             await window.cheerpjRunJar(
                 freej2mePath,
                 gamePath,
-                "240",
-                "320",
-                "4"
+                width.toString(),
+                height.toString(),
+                scale
             );
         } catch (error: any) {
             console.error('[FreeJ2MEManager] Load error:', error);

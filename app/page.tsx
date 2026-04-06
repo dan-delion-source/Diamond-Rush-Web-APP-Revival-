@@ -22,6 +22,8 @@ const GAMES = {
       { k: "Z / X", a: "Star / Pound" },
       { k: "Enter", a: "System Action" },
     ],
+    width: 240,
+    height: 320,
   },
   BounceTales: {
     label: "Bounce Tales",
@@ -36,6 +38,24 @@ const GAMES = {
       { k: "Q / W", a: "Options / Back" },
       { k: "Z / X", a: "Star / Pound" },
     ],
+    width: 240,
+    height: 320,
+  },
+  AgeOfEmpiresIII: {
+    label: "Age of Empires III",
+    jar: "/games/Age-of-Empires-III.jar",
+    subtitle: "Real-time Strategy",
+    description:
+      "Command powerful armies and conquer the world in this classic mobile version of the acclaimed real-time strategy franchise.",
+    frameTitle: "Age of Empires III • Mobile",
+    controls: [
+      { k: "Arrows", a: "Move Cursor Map" },
+      { k: "Enter", a: "Select / Action" },
+      { k: "Q / W", a: "Left Soft / Right Soft" },
+      { k: "Z / X", a: "Star / Pound" },
+    ],
+    width: 176,
+    height: 208,
   },
 } as const;
 
@@ -43,25 +63,33 @@ type GameKey = keyof typeof GAMES;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'arcadeSelectedGame';
-
-const getSavedGame = (): GameKey => {
-  if (typeof window === 'undefined') return 'DiamondRush';
-  const saved = sessionStorage.getItem(STORAGE_KEY) as GameKey | null;
-  return saved && saved in GAMES ? saved : 'DiamondRush';
-};
+const DEFAULT_GAME: GameKey = 'DiamondRush';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ArcadePage() {
   const [isCRT, setIsCRT] = React.useState(true);
-  // Initialize directly from sessionStorage — no useEffect needed since this
-  // value must be correct on the very first render (before CheerpJ starts).
-  const [selectedGame] = React.useState<GameKey>(getSavedGame);
+  // Always start with the default game for SSR/hydration consistency.
+  // After mount, read the real selection from sessionStorage.
+  const [selectedGame, setSelectedGame] = React.useState<GameKey>(DEFAULT_GAME);
+  const [mounted, setMounted] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY) as GameKey | null;
+    const resolved = saved && saved in GAMES ? saved : DEFAULT_GAME;
+    setSelectedGame(resolved);
+    setMounted(true);
+  }, []);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const game = GAMES[selectedGame];
+  const width = game.width;
+  const height = game.height;
 
-  const { isLoading, isReady, error, manager } = useEmulator(game.jar, containerRef);
+  // Only start the emulator after we know the real selected game
+  const { isLoading, isReady, error, manager } = useEmulator(
+    mounted ? game.jar : '', containerRef, width, height
+  );
 
   // Switching games requires a full page reload because CheerpJ can only be
   // initialized once per page. We persist the selection so the reload picks
@@ -189,6 +217,8 @@ export default function ArcadePage() {
                 isReady={isReady}
                 isLoading={isLoading}
                 error={error}
+                width={width}
+                height={height}
               />
             </PhoneFrame>
 
@@ -229,7 +259,7 @@ export default function ArcadePage() {
             <div className="mt-12 pt-10 border-t border-white/10 hidden xl:block">
               <h3 className="text-[10px] uppercase text-neutral-500 font-black tracking-[0.3em] mb-6">Instruction Set</h3>
               <div className="space-y-4">
-                {game.controls.map((map, i) => (
+                {game.controls.map((map: {k: string, a: string}, i: number) => (
                   <div key={i} className="flex justify-between items-center text-[10px] font-black group cursor-default">
                     <span className="bg-white/5 px-3 py-1.5 rounded-xl text-accent border border-white/10 shadow-lg group-hover:bg-accent group-hover:text-black transition-all duration-300 font-mono tracking-tighter">{map.k}</span>
                     <span className="text-neutral-500 uppercase tracking-widest opacity-60 group-hover:opacity-100 group-hover:text-neutral-300 transition-all">{map.a}</span>

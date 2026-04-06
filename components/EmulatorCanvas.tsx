@@ -34,40 +34,57 @@ interface EmulatorCanvasProps {
     isReady: boolean;
     isLoading: boolean;
     error: string | null;
+    width?: number;
+    height?: number;
 }
 
-const EmulatorCanvas: React.FC<EmulatorCanvasProps> = ({ containerRef, isReady, isLoading, error }) => {
+const EmulatorCanvas: React.FC<EmulatorCanvasProps> = ({ containerRef, isReady, isLoading, error, width = 240, height = 320 }) => {
 
     return (
-        <div className="relative w-full aspect-[240/320] bg-black overflow-hidden flex items-center justify-center rounded-[30px] border border-white/10 shadow-2xl">
+        <div
+            className="relative w-full bg-black overflow-hidden flex items-center justify-center rounded-[30px] border border-white/10 shadow-2xl"
+            style={{ aspectRatio: '240 / 320' }}
+        >
             {/* CheerpJ Display Container — Java AWT renders directly into this div */}
             <div
                 ref={containerRef}
                 id="cheerpj-display"
-                className={`w-full h-full transition-opacity duration-700 ${isReady ? 'opacity-100' : 'opacity-0'} flex items-center justify-center`}
+                className={`absolute inset-0 transition-opacity duration-700 ${isReady ? 'opacity-100' : 'opacity-0'}`}
                 style={{
-                    position: 'relative',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
                 }}
             />
 
-            {/* Scale and center the CheerpJ display via CSS */}
+            {/* Force all CheerpJ-injected elements to stretch and fill the container */}
             <style jsx global>{`
+                #cheerpj-display,
+                #cheerpj-display > *,
                 #cheerpj-display canvas,
                 #cheerpj-display iframe,
                 #cheerpj-display div {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
                     width: 100% !important;
                     height: 100% !important;
-                    max-width: 100% !important;
-                    max-height: 100% !important;
-                    object-fit: contain;
+                    max-width: none !important;
+                    max-height: none !important;
+                    min-width: 100% !important;
+                    min-height: 100% !important;
+                    object-fit: fill !important;
                     image-rendering: pixelated;
                     image-rendering: crisp-edges;
-                    display: block;
-                    margin: auto;
+                    display: block !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    transform: none !important;
                 }
-                /* Ensure CheerpJ's own wrapper doesn't crop */
                 #cheerpj-display {
-                    overflow: visible !important;
+                    overflow: hidden !important;
                 }
             `}</style>
 
