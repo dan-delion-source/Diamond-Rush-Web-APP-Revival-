@@ -54,8 +54,8 @@ const GAMES = {
       { k: "Q / W", a: "Left Soft / Right Soft" },
       { k: "Z / X", a: "Star / Pound" },
     ],
-    width: 176,
-    height: 208,
+    width: 130,
+    height: 130,
   },
 } as const;
 
@@ -136,11 +136,10 @@ export default function ArcadePage() {
                     <button
                       key={key}
                       onClick={() => handleGameSelect(key)}
-                      className={`w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-2 ${
-                        selectedGame === key
-                          ? "bg-accent/20 text-accent"
-                          : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
-                      }`}
+                      className={`w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-2 ${selectedGame === key
+                        ? "bg-accent/20 text-accent"
+                        : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                        }`}
                     >
                       <Gamepad2 size={11} />
                       {GAMES[key].label}
@@ -259,7 +258,7 @@ export default function ArcadePage() {
             <div className="mt-12 pt-10 border-t border-white/10 hidden xl:block">
               <h3 className="text-[10px] uppercase text-neutral-500 font-black tracking-[0.3em] mb-6">Instruction Set</h3>
               <div className="space-y-4">
-                {game.controls.map((map: {k: string, a: string}, i: number) => (
+                {game.controls.map((map: { k: string, a: string }, i: number) => (
                   <div key={i} className="flex justify-between items-center text-[10px] font-black group cursor-default">
                     <span className="bg-white/5 px-3 py-1.5 rounded-xl text-accent border border-white/10 shadow-lg group-hover:bg-accent group-hover:text-black transition-all duration-300 font-mono tracking-tighter">{map.k}</span>
                     <span className="text-neutral-500 uppercase tracking-widest opacity-60 group-hover:opacity-100 group-hover:text-neutral-300 transition-all">{map.a}</span>
