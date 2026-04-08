@@ -57,6 +57,22 @@ const GAMES = {
     width: 130,
     height: 130,
   },
+  GodOfWar: {
+    label: "God of War",
+    jar: "/games/God_Of_War.jar",
+    subtitle: "Betrayal • Action",
+    description:
+      "Experience Kratos' legendary journey on mobile. Unleash the power of the Gods in this epic side-scrolling action-adventure.",
+    frameTitle: "God of War • Betrayal",
+    controls: [
+      { k: "Arrows", a: "Movement / Combat" },
+      { k: "Enter", a: "Attack / Interact" },
+      { k: "Q / W", a: "Options / Back" },
+      { k: "Z / X", a: "Star / Pound" },
+    ],
+    width: 240,
+    height: 320,
+  },
 } as const;
 
 type GameKey = keyof typeof GAMES;
