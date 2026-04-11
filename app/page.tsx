@@ -73,6 +73,38 @@ const GAMES = {
     width: 240,
     height: 320,
   },
+  ZumaRevenge: {
+    label: "Zuma Revenge",
+    jar: "/games/Zuma-Revenge.jar",
+    subtitle: "Puzzle • Action",
+    description:
+      "Blast your way through waves of colorful rolling balls in this addictive marble-shooter. Match three or more to survive the ancient temple's wrath.",
+    frameTitle: "Zuma Revenge • Deluxe",
+    controls: [
+      { k: "Arrows", a: "Aim / Navigate" },
+      { k: "Enter", a: "Shoot / Confirm" },
+      { k: "Q / W", a: "Options / Back" },
+      { k: "Z / X", a: "Star / Pound" },
+    ],
+    width: 125,
+    height: 160,
+  },
+  Gangstar2: {
+    label: "Gangstar 2",
+    jar: "/games/Gangstar-2-Kings-of-LA.jar",
+    subtitle: "Kings of LA • Action",
+    description:
+      "Rule the streets of Los Angeles in this open-world crime epic. Jack cars, complete missions, and rise through the criminal underworld.",
+    frameTitle: "Gangstar 2 • Kings of LA",
+    controls: [
+      { k: "Arrows", a: "Movement / Drive" },
+      { k: "Enter", a: "Action / Confirm" },
+      { k: "Q / W", a: "Options / Back" },
+      { k: "Z / X", a: "Star / Pound" },
+    ],
+    width: 240,
+    height: 320,
+  },
 } as const;
 
 type GameKey = keyof typeof GAMES;
